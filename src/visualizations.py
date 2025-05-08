@@ -26,7 +26,7 @@ def generate_buttons(df, get_filtered_data):
                             filtered["tradeDate"].astype(str),
                             filtered["tradeDate"].astype(str),
                         ],
-                        "y": [filtered["TotalProfit"], filtered["PnLRealized"]],
+                        "y": [filtered["ProfitWeek"], filtered["PnLRealized"]],
                     },
                     {
                         "title": f"0DTE IF PnL in $ - Woche {w}",
@@ -49,7 +49,7 @@ def generate_buttons(df, get_filtered_data):
                             filtered["tradeDate"].astype(str),
                             filtered["tradeDate"].astype(str),
                         ],
-                        "y": [filtered["TotalProfit"], filtered["PnLRealized"]],
+                        "y": [filtered["ProfitMonth"], filtered["PnLRealized"]],
                     },
                     {
                         "title": f"0DTE IF PnL in $ - Monat {m}",
@@ -72,7 +72,7 @@ def generate_buttons(df, get_filtered_data):
                             filtered["tradeDate"].astype(str),
                             filtered["tradeDate"].astype(str),
                         ],
-                        "y": [filtered["TotalProfit"], filtered["PnLRealized"]],
+                        "y": [filtered["ProfitQuarter"], filtered["PnLRealized"]],
                     },
                     {
                         "title": f"0DTE IF PnL in $ - Quartal {q}",
