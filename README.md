@@ -1,6 +1,6 @@
 # IBKR Trade Visualization
 
-A tool for visualizing trade data from Interactive Brokers (IBKR). This project helps traders analyze their trading performance through intuitive and interactive visualizations. It is optimized for use with option trade data, especially 0DTE, exported from IBKR's trading platform.
+A tool for visualizing trade data from Interactive Brokers (IBKR). This project helps traders analyze their trading performance through intuitive and interactive visualizations. Currently **only working for 0DTE Option trades** exported via IBKR IBKR Flex Query.
 
 ## Table of Contents
 - [IBKR Trade Visualization](#ibkr-trade-visualization)
@@ -16,8 +16,10 @@ A tool for visualizing trade data from Interactive Brokers (IBKR). This project 
 ## Features
 
 - Import trade data from IBKR.
-- Generate various visualizations to analyze trading performance.
-- User-friendly interface for exploring trade metrics.
+- Generate various visualizations to analyze 0DTE trading performance.
+- User-friendly interface made with plotly for exploring trade metrics.
+
+![ibkr_trade_gif](https://github.com/user-attachments/assets/d860927f-395f-49e9-a93a-8b9b9e379531)
 
 ## Installation
 
@@ -34,9 +36,9 @@ A tool for visualizing trade data from Interactive Brokers (IBKR). This project 
 
 ## Usage
 
-1. Export your trade data from IBKR in the supported format.
-2. Upload the data through the application's interface.
-3. Explore the visualizations made with plotly to gain insights into your trading performance.
+1. Generate IBKR Flex Query report.
+2. Configure .env and load data with notebook.
+3. Explore the visualizations made with plotly to gain insights into your 0DTE trading performance.
 
 ## Generating IB Reports
 
