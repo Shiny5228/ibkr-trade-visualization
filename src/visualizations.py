@@ -1,4 +1,6 @@
+import pandas as pd
 import plotly.graph_objects as go
+
 
 def generate_buttons(df, get_filtered_data):
     """
@@ -37,27 +39,44 @@ def generate_buttons(df, get_filtered_data):
         )
 
     # Create Buttons for every month (1-12)
-    for m in sorted(df["month"].unique()):
-        filtered = get_filtered_data(df, "month", m)
-        buttons.append(
-            dict(
-                label=f"Monat {m}",
-                method="update",
-                args=[
-                    {
-                        "x": [
-                            filtered["tradeDate"].astype(str),
-                            filtered["tradeDate"].astype(str),
-                        ],
-                        "y": [filtered["ProfitMonth"], filtered["PnLRealized"]],
-                    },
-                    {
-                        "title": f"0DTE IF PnL in $ - Monat {m}",
-                        "xaxis": {"type": "category"},
-                    },
-                ],
+    months_order = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
+    df["month"] = pd.Categorical(df["month"], categories=months_order, ordered=True)
+
+    for m in df["month"].cat.categories:
+        if m in df["month"].unique():
+            filtered = get_filtered_data(df, "month", m)
+            buttons.append(
+                dict(
+                    label=m,
+                    method="update",
+                    args=[
+                        {
+                            "x": [
+                                filtered["tradeDate"].astype(str),
+                                filtered["tradeDate"].astype(str),
+                            ],
+                            "y": [filtered["ProfitMonth"], filtered["PnLRealized"]],
+                        },
+                        {
+                            "title": f"0DTE IF PnL in $ - Monat {m}",
+                            "xaxis": {"type": "category"},
+                        },
+                    ],
+                )
             )
-        )
 
     # Create Buttons for every quarter (1-4)
     for q in sorted(df["quarter"].unique()):
@@ -165,7 +184,7 @@ def create_initial_plot(df, buttons):
         title="0DTE IF PnL in $ - Total",
         xaxis_title="tradeDate",
         yaxis_title="PnL Realized",
-        autosize=True
+        autosize=True,
     )
     fig.update_xaxes(type="category")
     fig.layout.template = "plotly_dark"
