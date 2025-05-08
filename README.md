@@ -36,7 +36,7 @@ A tool for visualizing trade data from Interactive Brokers (IBKR). This project 
 
 1. Export your trade data from IBKR in the supported format.
 2. Upload the data through the application's interface.
-3. Explore the visualizations to gain insights into your trading performance.
+3. Explore the visualizations made with plotly to gain insights into your trading performance.
 
 ## Generating IB Reports
 
