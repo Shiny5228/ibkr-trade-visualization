@@ -31,7 +31,7 @@ def generate_buttons(df, get_filtered_data):
                         "y": [filtered["ProfitWeek"], filtered["PnLRealized"]],
                     },
                     {
-                        "title": f"0DTE IF PnL in $ - Woche {w}",
+                        "title": f"0DTE IF PnL in $ - Week {w}",
                         "xaxis": {"type": "category"},
                     },
                 ],
@@ -71,7 +71,7 @@ def generate_buttons(df, get_filtered_data):
                             "y": [filtered["ProfitMonth"], filtered["PnLRealized"]],
                         },
                         {
-                            "title": f"0DTE IF PnL in $ - Monat {m}",
+                            "title": f"0DTE IF PnL in $ - Month {m}",
                             "xaxis": {"type": "category"},
                         },
                     ],
@@ -94,7 +94,7 @@ def generate_buttons(df, get_filtered_data):
                         "y": [filtered["ProfitQuarter"], filtered["PnLRealized"]],
                     },
                     {
-                        "title": f"0DTE IF PnL in $ - Quartal {q}",
+                        "title": f"0DTE IF PnL in $ - Quarter {q}",
                         "xaxis": {"type": "category"},
                     },
                 ],
@@ -117,7 +117,7 @@ def generate_buttons(df, get_filtered_data):
                         "y": [filtered["TotalProfit"], filtered["PnLRealized"]],
                     },
                     {
-                        "title": f"0DTE IF PnL in $ - Jahr {y}",
+                        "title": f"0DTE IF PnL in $ - Year {y}",
                         "xaxis": {"type": "category"},
                     },
                 ],
