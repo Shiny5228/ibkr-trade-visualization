@@ -1,8 +1,6 @@
-# import calendar  # noqa: F401
 import json
 import os
 
-# from datetime import datetime, timedelta  # noqa: F401
 import pandas as pd
 import plotly.graph_objs as go
 from dash import Dash, Input, Output, dcc, html
@@ -25,7 +23,8 @@ headers_str = os.getenv("HEADERS")
 if headers_str is None:
     raise ValueError("Please set the HEADERS environment variable.")
 headers = json.loads(headers_str)
-### Get Statement from IB via API
+
+# Get Statement from IB via API
 # API Calls
 reference_code = send_request(token, query_id, flex_version, headers)
 df = get_statement(token, reference_code, flex_version, headers)
@@ -35,7 +34,7 @@ df = process_statement_data(df)
 df = transform(df)
 
 
-# Hilfsfunktionen für Zeitfilter
+# Helper functions for time filters
 def get_weeks(df_source):
     if df_source.empty:
         return []
@@ -55,11 +54,9 @@ def get_quarters(df_source):
 
 
 # Dash App
-# suppress_callback_exceptions kann weiterhin nützlich sein, ist aber für dieses spezielle Problem
-# mit dem neuen Ansatz möglicherweise nicht mehr zwingend erforderlich.
 app = Dash(__name__, suppress_callback_exceptions=True)
 
-# Layout mit Darkmode CSS Styles
+# Layout with dark mode CSS styles
 app.layout = html.Div(
     style={
         "backgroundColor": "#2f2f2f",
@@ -170,24 +167,23 @@ app.layout = html.Div(
     [Input("time-filter", "value")],
 )
 def manage_time_period_dropdown(selected_time_filter):
-    style = {"display": "none", "marginBottom": 20}  # Standard: versteckt
+    style = {"display": "none", "marginBottom": 20}
     options = []
-    value = []  # Für multi-select, immer auf leere Liste zurücksetzen, wenn Hauptfilter ändert
+    value = []
     placeholder = ""
 
     if selected_time_filter == "All weeks":
         options = [{"label": w, "value": w} for w in get_weeks(df)]
         placeholder = "Select one or more weeks"
-        style = {"display": "block", "marginBottom": 20}  # Anzeigen
+        style = {"display": "block", "marginBottom": 20}
     elif selected_time_filter == "All months":
         options = [{"label": m, "value": m} for m in get_months(df)]
         placeholder = "Select one or more months"
-        style = {"display": "block", "marginBottom": 20}  # Anzeigen
+        style = {"display": "block", "marginBottom": 20}
     elif selected_time_filter == "All quarters":
         options = [{"label": q, "value": q} for q in get_quarters(df)]
         placeholder = "Select one or more quarters"
         style = {"display": "block", "marginBottom": 20}  # Anzeigen
-
     return style, options, value, placeholder
 
 
@@ -243,7 +239,7 @@ def update_combined_chart_and_indicators(
                     filtered_df["quarter_str"].isin(selected_periods)
                 ]
 
-    # Win-Rate Berechnung
+    # Win rate calculation
     if not filtered_df.empty:
         trade_pnl_sum = filtered_df.groupby("opendateTime")["PnLRealized"].sum()
         wins = (trade_pnl_sum > 0).sum()
@@ -276,7 +272,7 @@ def update_combined_chart_and_indicators(
         font=dict(color="white"),
     )
 
-    # PCR Berechnung
+    # PCR calculation
     pcr_df = filtered_df[filtered_df["assetCategory"].isin(["FOP", "OPT"])]
     if not pcr_df.empty:
         sum_cost = abs(pcr_df["cost"].sum()).round(2)
@@ -305,7 +301,7 @@ def update_combined_chart_and_indicators(
         plot_bgcolor="#3f3f3f", paper_bgcolor="#3f3f3f", font=dict(color="white")
     )
 
-    # Chart-Berechnung (bestehender Code)
+    # Chart calculation
     if filtered_df.empty:
         combined_chart = {
             "data": [],
