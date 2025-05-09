@@ -4,12 +4,7 @@ import numpy as np
 import pandas as pd
 
 
-def filter_and_group_data(
-    df,
-    assets_to_include=None,
-    symbols_to_include=None,
-    dates_to_exclude=None,
-):
+def transform(df):
     """
     Filters and groups the given DataFrame based on specified criteria.
 
@@ -23,25 +18,6 @@ def filter_and_group_data(
         pandas.DataFrame: A grouped DataFrame with calculated PnLRealized.
     """
 
-    # Set default values if parameters are None
-    if assets_to_include is None:
-        assets_to_include = df["assetCategory"].unique()
-    if symbols_to_include is None:
-        symbols_to_include = df["underlyingSymbol"].unique()
-    if dates_to_exclude is None:
-        dates_to_exclude = []
-
-    # tradeDate is in datetime format and dates_to_exclude is converted to datetime
-    dates_to_exclude = pd.to_datetime(
-        dates_to_exclude, format="%Y%m%d", errors="coerce"
-    )
-
-    filtered_df = df[
-        (df["assetCategory"].isin(assets_to_include))
-        & (df["underlyingSymbol"].isin(symbols_to_include))
-        & (~df["tradeDate"].isin(dates_to_exclude))
-    ]
-
     # Ensure consistent datetime format for comparison
     current_date = pd.Timestamp(datetime.now().date())
     future_date = pd.Timestamp(datetime.now().date() + timedelta(days=3))
@@ -53,29 +29,18 @@ def filter_and_group_data(
     # Because of weekends and holidays the settlement date is not always t+1 and can be t+2 or t+3.
 
     condition = (
-        (filtered_df["tradeDate"] == filtered_df["expiry"])
-        & (filtered_df["fifoPnlRealized"] == 0)
-        & (filtered_df["settleDateTarget"].between(current_date, future_date))
+        (df["tradeDate"] == df["expiry"])
+        & (df["fifoPnlRealized"] == 0)
+        & (df["settleDateTarget"].between(current_date, future_date))
     )
 
-    # mtmPnL does noet include the commission, so we add it to the mtmPnl to get the correct PnLRealized.
-    mtmPnl_commission = filtered_df["mtmPnl"] + filtered_df["ibCommission"]
+    # mtmPnL does not include the commission, so we add it to the mtmPnl to get the correct PnLRealized.
+    mtmPnl_commission = df["mtmPnl"] + df["ibCommission"]
 
     # Set PnLRealized to mtmPnl + ibCommission if the condition is met, otherwise use fifoPnlRealized
-    filtered_df["PnLRealized"] = np.where(
-        condition, mtmPnl_commission, filtered_df["fifoPnlRealized"]
-    )
+    df["PnLRealized"] = np.where(condition, mtmPnl_commission, df["fifoPnlRealized"])
 
-    # Group by assetCategory, underlyingSymbol, tradeDate, and settleDateTarget and sum the PnLRealized
-    grouped_df = (
-        filtered_df.groupby(
-            ["assetCategory", "underlyingSymbol", "tradeDate", "settleDateTarget"]
-        )["PnLRealized"]
-        .sum()
-        .reset_index()
-    )
-
-    return filtered_df, grouped_df
+    return df
 
 
 def add_cum_sum_rows(df):
