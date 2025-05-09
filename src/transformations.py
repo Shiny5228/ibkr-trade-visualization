@@ -40,6 +40,15 @@ def transform(df):
     # Set PnLRealized to mtmPnl + ibCommission if the condition is met, otherwise use fifoPnlRealized
     df["PnLRealized"] = np.where(condition, mtmPnl_commission, df["fifoPnlRealized"])
 
+    # Filter for closed trades except for the ones that are not settled yet, like 0DTE options
+    df = df[
+        (df["openCloseIndicator"] == "C")
+        | (
+            (df["settleDateTarget"].between(current_date, future_date))
+            & (df["PnLRealized"] != 0)
+        )
+    ]
+
     return df
 
 

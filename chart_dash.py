@@ -1,8 +1,8 @@
-import calendar  # noqa: F401
+# import calendar  # noqa: F401
 import json
 import os
-from datetime import datetime, timedelta  # noqa: F401
 
+# from datetime import datetime, timedelta  # noqa: F401
 import pandas as pd
 import plotly.graph_objs as go
 from dash import Dash, Input, Output, dcc, html
@@ -10,10 +10,6 @@ from dotenv import load_dotenv
 
 from src.api_utils import get_statement, process_statement_data, send_request
 from src.transformations import transform
-
-# HINWEIS: Ersetzen Sie diesen Dummy-DataFrame durch Ihren tatsächlichen DataFrame.
-# Stellen Sie sicher, dass Ihr DataFrame 'df' heißt und die Spalten
-# 'tradeDate' (als datetime), 'PnLRealized', 'assetCategory' und 'underlyingSymbol' enthält.
 
 load_dotenv()
 token = os.getenv("TOKEN")
@@ -72,17 +68,17 @@ app.layout = html.Div(
         "padding": "20px",
     },
     children=[
-        html.H1("Trade-Visualisierung", style={"textAlign": "center"}),
+        html.H1("Hebelwerk Dashboard", style={"textAlign": "center"}),
         html.Div(
             [
-                html.Label("Zeitraumfilter:"),
+                html.Label("Select period:"),
                 dcc.Dropdown(
                     id="time-filter",
                     options=[
-                        {"label": "Gesamt", "value": "Total"},
-                        {"label": "Alle Wochen", "value": "Alle Wochen"},
-                        {"label": "Alle Monate", "value": "Alle Monate"},
-                        {"label": "Alle Quartale", "value": "Alle Quartale"},
+                        {"label": "Total", "value": "Total"},
+                        {"label": "All weeks", "value": "All weeks"},
+                        {"label": "All months", "value": "All months"},
+                        {"label": "All quarters", "value": "All quarters"},
                     ],
                     value="Total",
                     clearable=False,
@@ -100,7 +96,7 @@ app.layout = html.Div(
                     id="time-period-dropdown",
                     multi=True,
                     value=[],  # Initial leer für multi-select
-                    placeholder="Zeitraum auswählen",  # Allgemeiner initialer Platzhalter
+                    placeholder="Select period",  # Allgemeiner initialer Platzhalter
                     style={"width": "50%", "color": "#000"},
                 )
             ],
@@ -160,17 +156,17 @@ def manage_time_period_dropdown(selected_time_filter):
     value = []  # Für multi-select, immer auf leere Liste zurücksetzen, wenn Hauptfilter ändert
     placeholder = ""
 
-    if selected_time_filter == "Alle Wochen":
+    if selected_time_filter == "All weeks":
         options = [{"label": w, "value": w} for w in get_weeks(df)]
-        placeholder = "Wähle eine oder mehrere Wochen"
+        placeholder = "Select one or more weeks"
         style = {"display": "block", "marginBottom": 20}  # Anzeigen
-    elif selected_time_filter == "Alle Monate":
+    elif selected_time_filter == "All months":
         options = [{"label": m, "value": m} for m in get_months(df)]
-        placeholder = "Wähle einen oder mehrere Monate"
+        placeholder = "Select one or more months"
         style = {"display": "block", "marginBottom": 20}  # Anzeigen
-    elif selected_time_filter == "Alle Quartale":
+    elif selected_time_filter == "All quarters":
         options = [{"label": q, "value": q} for q in get_quarters(df)]
-        placeholder = "Wähle ein oder mehrere Quartale"
+        placeholder = "Select one or more quarters"
         style = {"display": "block", "marginBottom": 20}  # Anzeigen
 
     return style, options, value, placeholder
@@ -200,26 +196,26 @@ def update_combined_chart(
 
     if time_filter == "Total":
         pass
-    elif time_filter in ["Alle Wochen", "Alle Monate", "Alle Quartale"]:
+    elif time_filter in ["All weeks", "All months", "All quarters"]:
         # selected_periods ist [] wenn nichts ausgewählt oder Dropdown gerade erst sichtbar wurde/Filtertyp änderte
         if not selected_periods:
             filtered_df = pd.DataFrame(columns=df.columns)
             if "tradeDate" in filtered_df.columns:
                 filtered_df["tradeDate"] = pd.to_datetime(filtered_df["tradeDate"])
         else:
-            if time_filter == "Alle Wochen":
+            if time_filter == "All weeks":
                 filtered_df["week_str"] = filtered_df["tradeDate"].dt.strftime("%Y-W%U")
                 filtered_df = filtered_df[
                     filtered_df["week_str"].isin(selected_periods)
                 ]
-            elif time_filter == "Alle Monate":
+            elif time_filter == "All months":
                 filtered_df["month_str"] = (
                     filtered_df["tradeDate"].dt.to_period("M").astype(str)
                 )
                 filtered_df = filtered_df[
                     filtered_df["month_str"].isin(selected_periods)
                 ]
-            elif time_filter == "Alle Quartale":
+            elif time_filter == "All quarters":
                 filtered_df["quarter_str"] = (
                     filtered_df["tradeDate"].dt.to_period("Q").astype(str)
                 )
@@ -231,7 +227,7 @@ def update_combined_chart(
         return {
             "data": [],
             "layout": go.Layout(
-                title="Keine Daten für die ausgewählten Filter",
+                title="No data for the selected filters",
                 plot_bgcolor="#1e1e1e",
                 paper_bgcolor="#1e1e1e",
                 font=dict(color="white"),
@@ -260,7 +256,7 @@ def update_combined_chart(
         go.Bar(
             x=pnl_per_day["tradeDateStr"],
             y=pnl_per_day["PnLRealized"],
-            name="Gewinn/Verlust pro Tag",
+            name="Daily PnL",
             marker_color=[
                 "crimson" if x < 0 else "lightseagreen"
                 for x in pnl_per_day["PnLRealized"]
@@ -272,15 +268,15 @@ def update_combined_chart(
             x=pnl_per_day["tradeDateStr"],
             y=pnl_per_day["TotalProfit"],
             mode="lines+markers",
-            name="Kumulierter TotalProfit",
+            name="Cumulative Total Profit",
             line=dict(color="orange", width=2),
             marker=dict(size=5),
         )
     )
     fig.update_layout(
-        title="Gewinn/Verlust pro Tag und kumulierter TotalProfit",
+        title="Daily PnL and Cumulative Total Profit",
         xaxis=dict(
-            title="Datum",
+            title="Date",
             type="category",
             showgrid=True,
             gridcolor="rgba(128,128,128,0.2)",
@@ -288,7 +284,7 @@ def update_combined_chart(
             tickangle=-45,
         ),
         yaxis=dict(
-            title="Betrag",
+            title="Amount",
             showgrid=True,
             gridcolor="rgba(128,128,128,0.2)",
             color="white",
