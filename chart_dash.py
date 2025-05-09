@@ -70,24 +70,63 @@ app.layout = html.Div(
     children=[
         html.H1("Hebelwerk Dashboard", style={"textAlign": "center"}),
         html.Div(
-            [
-                html.Label("Select period:"),
-                dcc.Dropdown(
-                    id="time-filter",
-                    options=[
-                        {"label": "Total", "value": "Total"},
-                        {"label": "All weeks", "value": "All weeks"},
-                        {"label": "All months", "value": "All months"},
-                        {"label": "All quarters", "value": "All quarters"},
-                    ],
-                    value="Total",
-                    clearable=False,
-                    style={"width": "50%", "color": "#000"},
+            style={
+                "display": "flex",
+                "flexDirection": "row",
+                "gap": "20px",
+                "marginBottom": "20px",
+            },
+            children=[
+                html.Div(
+                    [
+                        html.Label("Select period:"),
+                        dcc.Dropdown(
+                            id="time-filter",
+                            options=[
+                                {"label": "Total", "value": "Total"},
+                                {"label": "All weeks", "value": "All weeks"},
+                                {"label": "All months", "value": "All months"},
+                                {"label": "All quarters", "value": "All quarters"},
+                            ],
+                            value="Total",
+                            clearable=False,
+                            style={"width": "400px", "color": "#000"},
+                        ),
+                    ]
+                ),
+                html.Div(
+                    [
+                        html.Label("Asset Category Filter:"),
+                        dcc.Dropdown(
+                            id="asset-filter",
+                            options=[
+                                {"label": i, "value": i}
+                                for i in sorted(df["assetCategory"].unique())
+                            ],
+                            value=df["assetCategory"].unique().tolist(),
+                            multi=True,
+                            style={"width": "400px", "color": "#000"},
+                        ),
+                    ]
+                ),
+                html.Div(
+                    [
+                        html.Label("Underlying Symbol Filter:"),
+                        dcc.Dropdown(
+                            id="symbol-filter",
+                            options=[
+                                {"label": i, "value": i}
+                                for i in sorted(df["underlyingSymbol"].unique())
+                            ],
+                            value=df["underlyingSymbol"].unique().tolist(),
+                            multi=True,
+                            style={"width": "400px", "color": "#000"},
+                        ),
+                    ]
                 ),
             ],
-            style={"marginBottom": 20},
         ),
-        # Wrapper für den dynamischen Dropdown, initial versteckt
+        # Wrapper für den dynamischen Dropdown
         html.Div(
             id="time-period-dropdown-wrapper",
             style={"display": "none", "marginBottom": 20},
@@ -95,43 +134,11 @@ app.layout = html.Div(
                 dcc.Dropdown(
                     id="time-period-dropdown",
                     multi=True,
-                    value=[],  # Initial leer für multi-select
-                    placeholder="Select period",  # Allgemeiner initialer Platzhalter
+                    value=[],
+                    placeholder="Select period",
                     style={"width": "50%", "color": "#000"},
                 )
             ],
-        ),
-        html.Div(
-            [
-                html.Label("Asset Category Filter:"),
-                dcc.Dropdown(
-                    id="asset-filter",
-                    options=[
-                        {"label": i, "value": i}
-                        for i in sorted(df["assetCategory"].unique())
-                    ],
-                    value=df["assetCategory"].unique().tolist(),
-                    multi=True,
-                    style={"width": "50%", "color": "#000"},
-                ),
-            ],
-            style={"marginBottom": 20},
-        ),
-        html.Div(
-            [
-                html.Label("Underlying Symbol Filter:"),
-                dcc.Dropdown(
-                    id="symbol-filter",
-                    options=[
-                        {"label": i, "value": i}
-                        for i in sorted(df["underlyingSymbol"].unique())
-                    ],
-                    value=df["underlyingSymbol"].unique().tolist(),
-                    multi=True,
-                    style={"width": "50%", "color": "#000"},
-                ),
-            ],
-            style={"marginBottom": 20},
         ),
         dcc.Graph(id="combined-chart"),
     ],
