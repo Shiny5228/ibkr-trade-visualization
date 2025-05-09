@@ -40,6 +40,34 @@ def transform(df):
     # Set PnLRealized to mtmPnl + ibCommission if the condition is met, otherwise use fifoPnlRealized
     df["PnLRealized"] = np.where(condition, mtmPnl_commission, df["fifoPnlRealized"])
 
+    # Initialisiere die neue Spalte mit leeren Werten
+
+    df["opendateTime"] = pd.NaT
+    df["opendateTime"] = df["opendateTime"].astype("datetime64[ns]")
+
+    # Gruppiere nach 'description'
+    grouped = df.groupby("description")
+    for name, group in grouped:
+        if len(group) == 1 and group["openCloseIndicator"].iloc[0] == "O":
+            df.loc[df["description"] == name, "opendateTime"] = group["dateTime"].iloc[
+                0
+            ]
+        else:
+            if "O" in group["openCloseIndicator"].values:
+                open_datetime = group[group["openCloseIndicator"] == "O"][
+                    "dateTime"
+                ].iloc[0]
+                df.loc[
+                    (df["description"] == name) & (df["openCloseIndicator"] == "C"),
+                    "opendateTime",
+                ] = open_datetime
+            else:
+                open_datetime = group["dateTime"].iloc[0]
+                df.loc[
+                    (df["description"] == name) & (df["openCloseIndicator"] == "C"),
+                    "opendateTime",
+                ] = open_datetime
+
     # Filter for closed trades except for the ones that are not settled yet, like 0DTE options
     df = df[
         (df["openCloseIndicator"] == "C")
@@ -50,124 +78,3 @@ def transform(df):
     ]
 
     return df
-
-
-def add_cum_sum_rows(df):
-    """
-    Adds cumulative sum columns to the DataFrame for different time periods.
-
-    Parameters:
-        df (pandas.DataFrame): The DataFrame to which cumulative sum columns will be added.
-
-    Returns:
-        pandas.DataFrame: The modified DataFrame with additional cumulative sum columns.
-    """
-
-    # cumulative sum
-    df["TotalProfit"] = df["PnLRealized"].cumsum()
-
-    # cumulative sum per calendarweek
-    df["ProfitWeek"] = df.groupby(df["tradeDate"].dt.isocalendar().week)[
-        "PnLRealized"
-    ].cumsum()
-
-    # cumulative sum per month
-    df["ProfitMonth"] = df.groupby(df["tradeDate"].dt.to_period("M"))[
-        "PnLRealized"
-    ].cumsum()
-
-    # cumulative sum per quarter
-    df["ProfitQuarter"] = df.groupby(df["tradeDate"].dt.to_period("Q"))[
-        "PnLRealized"
-    ].cumsum()
-
-    df["week"] = df["tradeDate"].dt.isocalendar().week
-    df["month"] = df["tradeDate"].dt.month_name()
-    df["quarter"] = df["tradeDate"].dt.quarter
-    df["year"] = df["tradeDate"].dt.year
-
-    return df
-
-
-# Prepare data for visualization
-def get_filtered_data(df, period, value=None):
-    """
-    Filters a DataFrame based on a specified time period and value.
-
-    Parameters:
-        df (pandas.DataFrame): The DataFrame to filter. It is expected to have columns
-                               such as 'week', 'month', 'quarter', and 'year'.
-        period (str): The time period to filter by. Accepted values are "week", "month",
-                      "quarter", or "year".
-        value (optional): The value to filter the specified period by. If None, the
-                          function returns the original DataFrame.
-
-    Returns:
-        pandas.DataFrame: A filtered DataFrame containing rows that match the specified
-                          period and value. If the period is not recognized, the original
-                          DataFrame is returned.
-    """
-    if period == "week":
-        return df[df["week"] == value]
-    elif period == "month":
-        return df[df["month"] == value]
-    elif period == "quarter":
-        return df[df["quarter"] == value]
-    elif period == "year":
-        return df[df["year"] == value]
-    else:
-        return df
-
-
-def get_filtered_pcr(df, period, value=None):
-    """
-    Filters a DataFrame based on a specified time period and calculates the Premium Capture Rate (PCR).
-
-    Parameters:
-        df (pandas.DataFrame): The DataFrame to filter. It must contain the columns 'tradeDate', 'cost', and 'PnLRealized'.
-        period (str): The time period to filter by. Accepted values are "week", "month", "quarter", or "year".
-        value (optional): The value to filter the specified period by. If None, the function processes the entire DataFrame.
-
-    Returns:
-        None: Prints the premium received, premium captured, and premium capture rate.
-    """
-    # Ensure the DataFrame has the necessary columns
-    required_columns = {"tradeDate", "cost", "PnLRealized"}
-    if not required_columns.issubset(df.columns):
-        raise ValueError(
-            f"The DataFrame must contain the following columns: {required_columns}"
-        )
-
-    # Zeitspalten erzeugen
-    df["week"] = df["tradeDate"].dt.isocalendar().week
-    df["month"] = df["tradeDate"].dt.month_name()
-    df["quarter"] = df["tradeDate"].dt.quarter
-    df["year"] = df["tradeDate"].dt.year
-
-    # Nach Zeitraum filtern
-    if period == "week":
-        filtered_df = df[df["week"] == value]
-    elif period == "month":
-        filtered_df = df[df["month"] == value]
-    elif period == "quarter":
-        filtered_df = df[df["quarter"] == value]
-    elif period == "year":
-        filtered_df = df[df["year"] == value]
-    else:
-        filtered_df = df
-
-    # Nur verkaufte Optionen filtern (cost < 0)
-    df_pcr = filtered_df[filtered_df["cost"] < 0]
-
-    # Summen berechnen
-    sum_cost = abs(df_pcr["cost"].sum()).round(2)
-    sum_realized = df_pcr["PnLRealized"].sum().round(2)
-
-    # Premium Capture Rate berechnen
-    premium_capture_rate = (
-        ((sum_realized / sum_cost) * 100).round(2) if sum_cost != 0 else 0.0
-    )
-
-    print(f"Premium received: {sum_cost}")
-    print(f"Premium captured: {sum_realized}")
-    print(f"Premium capture rate: {premium_capture_rate}")
