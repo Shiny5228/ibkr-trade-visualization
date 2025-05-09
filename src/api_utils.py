@@ -59,5 +59,6 @@ def process_statement_data(df):
     df["tradeDate"] = pd.to_datetime(df["tradeDate"], format="%Y%m%d")
     df["settleDateTarget"] = pd.to_datetime(df["settleDateTarget"], format="%Y%m%d")
     df["expiry"] = pd.to_datetime(df["expiry"], format="%Y%m%d")
+    df["dateTime"] = pd.to_datetime(df["dateTime"], format="%Y%m%d%H%M%S")
 
     return df
