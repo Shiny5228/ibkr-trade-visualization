@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+
+import numpy as np
 import pandas as pd
 
 
@@ -5,7 +8,6 @@ def filter_and_group_data(
     df,
     assets_to_include=None,
     symbols_to_include=None,
-    notes_to_exclude=None,
     dates_to_exclude=None,
 ):
     """
@@ -15,7 +17,6 @@ def filter_and_group_data(
         df (pandas.DataFrame): The DataFrame to filter and group.
         assets_to_include (list, optional): List of asset categories to include, e.g., ["STK", "OPT", "FUT", "FOP"]. Defaults to None.
         symbols_to_include (list, optional): List of underlying symbols to include. Defaults to None.
-        notes_to_exclude (list, optional): List of notes to exclude. Defaults to None.
         dates_to_exclude (list, optional): List of trade dates to exclude. Defaults to None.
 
     Returns:
@@ -27,8 +28,6 @@ def filter_and_group_data(
         assets_to_include = df["assetCategory"].unique()
     if symbols_to_include is None:
         symbols_to_include = df["underlyingSymbol"].unique()
-    if notes_to_exclude is None:
-        notes_to_exclude = []
     if dates_to_exclude is None:
         dates_to_exclude = []
 
@@ -40,20 +39,40 @@ def filter_and_group_data(
     filtered_df = df[
         (df["assetCategory"].isin(assets_to_include))
         & (df["underlyingSymbol"].isin(symbols_to_include))
-        & (~df["notes"].isin(notes_to_exclude))
         & (~df["tradeDate"].isin(dates_to_exclude))
     ]
 
-    # mtmPnl is used because fifoPnlRealized is only available one day after settlement (t+2)
-    # and we want to calculate the PnLRealized as fast as possible (t+0 or t+1).
-    # That why assigned and excercised options are excluded in the notebook
-    filtered_df["PnLRealized"] = filtered_df["mtmPnl"] + filtered_df["ibCommission"]
+    # Ensure consistent datetime format for comparison
+    current_date = pd.Timestamp(datetime.now().date())
+    future_date = pd.Timestamp(datetime.now().date() + timedelta(days=3))
 
+    # Open trades are not included in the PnLRealized calculation and are filtered out in the PnLRealized calculation.
+    # If a closed trade is settled fifoPnlRealized is used for the PnLRealized calculation.
+    # If a closed trade is not settled, mtmPnl + ibCommission is used for the PnLRealized calculation.
+    # That way the PnLRealized is calculated as fast as possible (t+1).
+    # Because of weekends and holidays the settlement date is not always t+1 and can be t+2 or t+3.
+
+    condition = (
+        (filtered_df["tradeDate"] == filtered_df["expiry"])
+        & (filtered_df["fifoPnlRealized"] == 0)
+        & (filtered_df["settleDateTarget"].between(current_date, future_date))
+    )
+
+    # mtmPnL does noet include the commission, so we add it to the mtmPnl to get the correct PnLRealized.
+    mtmPnl_commission = filtered_df["mtmPnl"] + filtered_df["ibCommission"]
+
+    # Set PnLRealized to mtmPnl + ibCommission if the condition is met, otherwise use fifoPnlRealized
+    filtered_df["PnLRealized"] = np.where(
+        condition, mtmPnl_commission, filtered_df["fifoPnlRealized"]
+    )
+
+    # Group by assetCategory, underlyingSymbol, tradeDate, and settleDateTarget and sum the PnLRealized
     grouped_df = (
         filtered_df.groupby(["tradeDate", "settleDateTarget"])["PnLRealized"]
         .sum()
         .reset_index()
     )
+
     return filtered_df, grouped_df
 
 
