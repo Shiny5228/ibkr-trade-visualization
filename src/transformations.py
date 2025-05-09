@@ -5,18 +5,17 @@ import pandas as pd
 
 
 def transform(df):
+
     """
     Filters and groups the given DataFrame based on specified criteria.
 
     Parameters:
         df (pandas.DataFrame): The DataFrame to filter and group.
-        assets_to_include (list, optional): List of asset categories to include, e.g., ["STK", "OPT", "FUT", "FOP"]. Defaults to None.
-        symbols_to_include (list, optional): List of underlying symbols to include. Defaults to None.
-        dates_to_exclude (list, optional): List of trade dates to exclude. Defaults to None.
 
     Returns:
         pandas.DataFrame: A grouped DataFrame with calculated PnLRealized.
     """
+
 
     # Ensure consistent datetime format for comparison
     current_date = pd.Timestamp(datetime.now().date())
