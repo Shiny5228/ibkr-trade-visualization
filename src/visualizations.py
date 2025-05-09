@@ -31,7 +31,7 @@ def generate_buttons(df, get_filtered_data):
                         "y": [filtered["ProfitWeek"], filtered["PnLRealized"]],
                     },
                     {
-                        "title": f"0DTE IF PnL in $ - Week {w}",
+                        "title": f"PnL in $ - Week {w}",
                         "xaxis": {"type": "category"},
                     },
                 ],
@@ -71,7 +71,7 @@ def generate_buttons(df, get_filtered_data):
                             "y": [filtered["ProfitMonth"], filtered["PnLRealized"]],
                         },
                         {
-                            "title": f"0DTE IF PnL in $ - Month {m}",
+                            "title": f"PnL in $ - Month {m}",
                             "xaxis": {"type": "category"},
                         },
                     ],
@@ -94,7 +94,7 @@ def generate_buttons(df, get_filtered_data):
                         "y": [filtered["ProfitQuarter"], filtered["PnLRealized"]],
                     },
                     {
-                        "title": f"0DTE IF PnL in $ - Quarter {q}",
+                        "title": f"PnL in $ - Quarter {q}",
                         "xaxis": {"type": "category"},
                     },
                 ],
@@ -117,7 +117,7 @@ def generate_buttons(df, get_filtered_data):
                         "y": [filtered["TotalProfit"], filtered["PnLRealized"]],
                     },
                     {
-                        "title": f"0DTE IF PnL in $ - Year {y}",
+                        "title": f"PnL in $ - Year {y}",
                         "xaxis": {"type": "category"},
                     },
                 ],
@@ -137,21 +137,125 @@ def generate_buttons(df, get_filtered_data):
                     ],
                     "y": [df["TotalProfit"], df["PnLRealized"]],
                 },
-                {"title": "0DTE IF PnL in $ - Total", "xaxis": {"type": "category"}},
+                {"title": "PnL in $ - Total", "xaxis": {"type": "category"}},
             ],
         )
     )
 
-    return buttons
+    # Button 2: Filter by assetCategory (multi-select)
+    asset_categories = sorted(df["assetCategory"].unique())
+    buttons_asset = []
+
+    # Add "Alle" button
+    buttons_asset.append(
+        dict(
+            label="Alle",
+            method="update",
+            args=[
+                {
+                    "x": [
+                        df["tradeDate"].astype(str),
+                        df["tradeDate"].astype(str),
+                    ],
+                    "y": [df["PnLRealized"], df["PnLRealized"]],
+                },
+                {
+                    "title": "PnL in $ - Alle Asset Kategorien",
+                    "xaxis": {"type": "category"},
+                },
+            ],
+        )
+    )
+
+    for asset in asset_categories:
+        buttons_asset.append(
+            dict(
+                label=f"Asset: {asset}",
+                method="update",
+                args=[
+                    {
+                        "x": [
+                            df[df["assetCategory"] == asset]["tradeDate"].astype(str),
+                            df[df["assetCategory"] == asset]["tradeDate"].astype(str),
+                        ],
+                        "y": [
+                            df[df["assetCategory"] == asset]["PnLRealized"],
+                            df[df["assetCategory"] == asset]["PnLRealized"],
+                        ],
+                    },
+                    {
+                        "title": f"PnL in $ - Asset: {asset}",
+                        "xaxis": {"type": "category"},
+                    },
+                ],
+            )
+        )
+
+    # Button 3: Filter by underlyingSymbol (multi-select)
+    underlying_symbols = sorted(df["underlyingSymbol"].unique())
+    buttons_symbol = []
+
+    # Add "Alle" button
+    buttons_symbol.append(
+        dict(
+            label="Alle",
+            method="update",
+            args=[
+                {
+                    "x": [
+                        df["tradeDate"].astype(str),
+                        df["tradeDate"].astype(str),
+                    ],
+                    "y": [df["PnLRealized"], df["PnLRealized"]],
+                },
+                {
+                    "title": "PnL in $ - Alle Symbole",
+                    "xaxis": {"type": "category"},
+                },
+            ],
+        )
+    )
+
+    for symbol in underlying_symbols:
+        buttons_symbol.append(
+            dict(
+                label=f"Symbol: {symbol}",
+                method="update",
+                args=[
+                    {
+                        "x": [
+                            df[df["underlyingSymbol"] == symbol]["tradeDate"].astype(
+                                str
+                            ),
+                            df[df["underlyingSymbol"] == symbol]["tradeDate"].astype(
+                                str
+                            ),
+                        ],
+                        "y": [
+                            df[df["underlyingSymbol"] == symbol]["PnLRealized"],
+                            df[df["underlyingSymbol"] == symbol]["PnLRealized"],
+                        ],
+                    },
+                    {
+                        "title": f"PnL in $ - Symbol: {symbol}",
+                        "xaxis": {"type": "category"},
+                    },
+                ],
+            )
+        )
+
+    return buttons, buttons_asset, buttons_symbol
 
 
-def create_initial_plot(df, buttons):
+def create_initial_plot(df, buttons1, buttons2, buttons3):
     """
     Create the initial plot with the "Total" view and add buttons for interactivity.
 
     Args:
         df (DataFrame): The grouped DataFrame containing trade data.
-        buttons (list): A list of button dictionaries for use in the plot.
+        buttons1 (list): A list of button dictionaries for year filtering.
+        buttons2 (list): A list of button dictionaries for asset category filtering.
+        buttons3 (list): A list of button dictionaries for underlying symbol filtering.
 
     Returns:
         plotly.graph_objects.Figure: The created figure.
@@ -173,15 +277,35 @@ def create_initial_plot(df, buttons):
         marker_color="green",
     )
 
+    # Ensure updatemenus is correctly structured
     fig.update_layout(
         updatemenus=[
             dict(
-                active=len(buttons) - 1,  # "Total" is the last button
-                buttons=buttons,
+                active=len(buttons1) - 1,  # "Total" is the last button
+                buttons=buttons1,
                 direction="down",
-            )
+                showactive=True,
+                x=0.1,
+                y=1.15,
+            ),  # Adjust position if necessary
+            dict(
+                active=0,
+                buttons=buttons2,
+                direction="down",
+                showactive=True,
+                x=0.5,
+                y=1.15,
+            ),  # Adjust position if necessary
+            dict(
+                active=0,
+                buttons=buttons3,
+                direction="down",
+                showactive=True,
+                x=0.9,
+                y=1.15,
+            ),  # Adjust position if necessary
         ],
-        title="0DTE IF PnL in $ - Total",
+        title="PnL in $ - Total",
         xaxis_title="tradeDate",
         yaxis_title="PnL Realized",
         autosize=True,
