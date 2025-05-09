@@ -5,7 +5,6 @@ import pandas as pd
 
 
 def transform(df):
-
     """
     Filters and groups the given DataFrame based on specified criteria.
 
@@ -15,7 +14,6 @@ def transform(df):
     Returns:
         pandas.DataFrame: A grouped DataFrame with calculated PnLRealized.
     """
-
 
     # Ensure consistent datetime format for comparison
     current_date = pd.Timestamp(datetime.now().date())
@@ -39,12 +37,11 @@ def transform(df):
     # Set PnLRealized to mtmPnl + ibCommission if the condition is met, otherwise use fifoPnlRealized
     df["PnLRealized"] = np.where(condition, mtmPnl_commission, df["fifoPnlRealized"])
 
-    # Initialisiere die neue Spalte mit leeren Werten
-
+    # Initialize the new column with empty values
     df["opendateTime"] = pd.NaT
     df["opendateTime"] = df["opendateTime"].astype("datetime64[ns]")
 
-    # Gruppiere nach 'description'
+    # Group by 'description'
     grouped = df.groupby("description")
     for name, group in grouped:
         if len(group) == 1 and group["openCloseIndicator"].iloc[0] == "O":
