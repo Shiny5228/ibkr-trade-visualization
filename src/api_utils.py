@@ -5,40 +5,45 @@ import pandas as pd
 import requests
 
 
-def send_request(token, query_id, flex_version, headers):
+def send_request(config):
     """
-    Sends a request to the Interactive Brokers Flex Web Service to generate a statement.
+    Send a request to the IB API to generate a statement.
 
     Args:
-        token (str): The API token for authentication.
-        query_id (str): The query ID for the Flex report.
-        flex_version (str): The version of the Flex Web Service.
-        headers (dict): Additional headers for the HTTP request.
+        config (dict): Configuration dictionary containing TOKEN, QUERY_ID, FLEX_VERSION, and HEADERS.
 
     Returns:
-        str: The reference code for the generated statement.
+        str: Reference code for the generated statement.
     """
+    token = config["TOKEN"]
+    query_id = config["QUERY_ID"]
+    flex_version = config["FLEX_VERSION"]
+    headers = config["HEADERS"]
+
     send_url = "https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/SendRequest"
     send_params = {"t": token, "q": query_id, "v": flex_version}
     response = requests.get(send_url, params=send_params, headers=headers)
     reference_code = ET.fromstring(response.text).findtext("ReferenceCode")
 
+    response.raise_for_status()  # Raise an error for bad responses
     return reference_code
 
 
-def get_statement(token, reference_code, flex_version, headers):
+def get_statement(config, reference_code):
     """
-    Retrieves the statement data from the Interactive Brokers Flex Web Service.
+    Retrieve the generated statement from the IB API.
 
     Args:
-        token (str): The API token for authentication.
-        reference_code (str): The reference code for the generated statement.
-        flex_version (str): The version of the Flex Web Service.
-        headers (dict): Additional headers for the HTTP request.
+        config (dict): Configuration dictionary containing TOKEN, FLEX_VERSION, and HEADERS.
+        reference_code (str): Reference code for the generated statement.
 
     Returns:
-        pd.DataFrame: A DataFrame containing the statement data filtered by the specified XPath.
+        pd.DataFrame: DataFrame containing the statement data.
     """
+    token = config["TOKEN"]
+    flex_version = config["FLEX_VERSION"]
+    headers = config["HEADERS"]
+
     get_url = "https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/GetStatement"
     get_params = {"t": token, "q": reference_code, "v": flex_version}
     xml_data = requests.get(get_url, params=get_params, headers=headers).text
