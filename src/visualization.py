@@ -129,7 +129,7 @@ def create_dashboard(df):
                     ),
                 ],
             ),
-            # Wrapper für den dynamischen Dropdown
+            # Wrapper for dynamic time period dropdown
             html.Div(
                 id="time-period-dropdown-wrapper",
                 style={"display": "none", "marginBottom": 20},
@@ -159,14 +159,12 @@ def create_dashboard(df):
         ],
     )
 
-    # Callback zur Steuerung der Sichtbarkeit und Optionen des time-period-dropdown
+    # Callback for managing the visibility and options of the time-period-dropdown
     @app.callback(
         [
             Output("time-period-dropdown-wrapper", "style"),
             Output("time-period-dropdown", "options"),
-            Output(
-                "time-period-dropdown", "value"
-            ),  # Wert zurücksetzen, wenn Filtertyp ändert
+            Output("time-period-dropdown", "value"),
             Output("time-period-dropdown", "placeholder"),
         ],
         [Input("time-filter", "value")],
@@ -191,7 +189,7 @@ def create_dashboard(df):
             style = {"display": "block", "marginBottom": 20}  # Anzeigen
         return style, options, value, placeholder
 
-    # Callback zur Aktualisierung des kombinierten Graphen und der Indikatoren
+    # Callback for updating the combined chart and indicators
     @app.callback(
         [
             Output("combined-chart", "figure"),
