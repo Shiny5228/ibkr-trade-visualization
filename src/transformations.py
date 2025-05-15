@@ -73,4 +73,15 @@ def transform(df):
         )
     ]
 
-    return df
+    # Remove duplicates based on 'description' and 'tradeDate'.
+    # Some 0DTE trades can be counted twice, if the position is closed on the same day and the position is not settled yet.
+    # In this case we keep the entry with openCloseIndicator == 'C' and remove the other one.
+    duplicates = df[df.duplicated(subset=["description", "tradeDate"], keep=False)]
+
+    df_no_dupes = pd.concat(
+        [duplicates[duplicates["openCloseIndicator"] == "C"], df.drop(duplicates.index)]
+    )
+
+    df_no_dupes = df_no_dupes.sort_index()
+
+    return df_no_dupes
