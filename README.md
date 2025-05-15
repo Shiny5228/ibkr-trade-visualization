@@ -52,20 +52,23 @@ To generate the required IBKR Flex Query report:
 3. Create a new Flex Query with the following fields in **Trades**:
    - **Execution** At the top of the report
    - **Account ID**
-   - **Asset Class**
    - **Description** 
+   - **Asset Class**
    - **Underlying Symbol**
+   - **Put/Call**
+   - **Buy/Sell**
    - **Strike**
    - **Date/Time**
    - **Trade Date**
    - **Settle Date**
-   - **Put/Call**
-   - **Buy/Sell**
+   - **Expiry**
+   - **Open/Close**
    - **Notes**
    - **Cost Basis**
    - **Realized PnL**
    - **MTM P/L**
    - **IB Commission**
+   - **FX Rate**
    - **Level of Detail**
 4. At Delivery Configuration select **Format: XML** and **Period: Year to Date**.
 5. Set decimal for dates to **None**
