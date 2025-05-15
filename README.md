@@ -72,7 +72,7 @@ To generate the required IBKR Flex Query report:
 6. Save the query and note the `Query ID`.
 7. Activate Web Services, see here: [IBKR Web Services](https://www.ibkrguides.com/clientportal/performanceandstatements/flex-web-service.htm).
 8. Configure the `TOKEN`, `QUERY_ID`, and other required environment variables in a `.env` file.
-9. Run chart_dash.py
+9. Run main.py
 
 ## Contributing
 
