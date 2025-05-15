@@ -71,7 +71,7 @@ To generate the required IBKR Flex Query report:
    - **FX Rate**
    - **Level of Detail**
 4. At Delivery Configuration select **Format: XML** and **Period: Year to Date**.
-5. Set decimal for dates to **None**
+5. Set decimal for dates to **None (no separator)**
 6. Save the query and note the `Query ID`.
 7. Activate Web Services, see here: [IBKR Web Services](https://www.ibkrguides.com/clientportal/performanceandstatements/flex-web-service.htm).
 8. Configure the `TOKEN`, `QUERY_ID`, and other required environment variables in a `.env` file.
