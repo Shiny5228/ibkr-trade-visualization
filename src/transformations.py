@@ -4,6 +4,28 @@ import numpy as np
 import pandas as pd
 
 
+def filter_group_general(group):
+    """
+    Filters a group of trades to keep only the relevant entries.
+    This function checks if there are any closed trades in the group.
+    If there are, it keeps the closed trades and the last open trade.
+
+    Parameters:
+        group (pandas.DataFrame): A group of trades.
+    Returns:
+        pandas.DataFrame: The filtered group.
+    """
+    if (group["openCloseIndicator"] == "C").any():
+        max_datetime = group["dateTime"].max()
+        max_dt_row = group[group["dateTime"] == max_datetime]
+        if max_dt_row["openCloseIndicator"].iloc[0] == "O":
+            return pd.concat([group[group["openCloseIndicator"] == "C"], max_dt_row])
+        else:
+            return group[group["openCloseIndicator"] == "C"]
+    else:
+        return group
+
+
 def transform(df):
     """
     Filters and groups the given DataFrame based on specified criteria.
@@ -44,25 +66,15 @@ def transform(df):
     # Group by 'description'
     grouped = df.groupby("description")
     for name, group in grouped:
-        if len(group) == 1 and group["openCloseIndicator"].iloc[0] == "O":
-            df.loc[df["description"] == name, "opendateTime"] = group["dateTime"].iloc[
+        if "O" in group["openCloseIndicator"].values:
+            open_datetime = group[group["openCloseIndicator"] == "O"]["dateTime"].iloc[
                 0
             ]
         else:
-            if "O" in group["openCloseIndicator"].values:
-                open_datetime = group[group["openCloseIndicator"] == "O"][
-                    "dateTime"
-                ].iloc[0]
-                df.loc[
-                    (df["description"] == name) & (df["openCloseIndicator"] == "C"),
-                    "opendateTime",
-                ] = open_datetime
-            else:
-                open_datetime = group["dateTime"].iloc[0]
-                df.loc[
-                    (df["description"] == name) & (df["openCloseIndicator"] == "C"),
-                    "opendateTime",
-                ] = open_datetime
+            open_datetime = group["dateTime"].iloc[
+                0
+            ]  # Fallback, falls keine "O" vorhanden
+        df.loc[df["description"] == name, "opendateTime"] = open_datetime
 
     # Filter for closed trades except for the ones that are not settled yet, like 0DTE options
     df = df[
@@ -75,13 +87,10 @@ def transform(df):
 
     # Remove duplicates based on 'description' and 'tradeDate'.
     # Some 0DTE trades can be counted twice, if the position is closed on the same day and the position is not settled yet.
-    # In this case we keep the entry with openCloseIndicator == 'C' and remove the other one.
-    duplicates = df[df.duplicated(subset=["description", "tradeDate"], keep=False)]
+    grouped = df.groupby(["description", "tradeDate"])
 
-    df_no_dupes = pd.concat(
-        [duplicates[duplicates["openCloseIndicator"] == "C"], df.drop(duplicates.index)]
-    )
-
-    df_no_dupes = df_no_dupes.sort_index()
+    df_no_dupes = grouped.apply(
+        filter_group_general, include_groups=False
+    ).reset_index()
 
     return df_no_dupes
