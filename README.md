@@ -52,27 +52,30 @@ To generate the required IBKR Flex Query report:
 3. Create a new Flex Query with the following fields in **Trades**:
    - **Execution** At the top of the report
    - **Account ID**
-   - **Asset Class**
    - **Description** 
+   - **Asset Class**
    - **Underlying Symbol**
+   - **Put/Call**
+   - **Buy/Sell**
    - **Strike**
    - **Date/Time**
    - **Trade Date**
    - **Settle Date**
-   - **Put/Call**
-   - **Buy/Sell**
+   - **Expiry**
+   - **Open/Close**
    - **Notes**
    - **Cost Basis**
    - **Realized PnL**
    - **MTM P/L**
    - **IB Commission**
+   - **FX Rate**
    - **Level of Detail**
 4. At Delivery Configuration select **Format: XML** and **Period: Year to Date**.
-5. Set decimal for dates to **None**
+5. Set decimal for dates to **None (no separator)**
 6. Save the query and note the `Query ID`.
 7. Activate Web Services, see here: [IBKR Web Services](https://www.ibkrguides.com/clientportal/performanceandstatements/flex-web-service.htm).
 8. Configure the `TOKEN`, `QUERY_ID`, and other required environment variables in a `.env` file.
-9. Run chart_dash.py
+9. Run main.py
 
 ## Contributing
 
