@@ -58,20 +58,21 @@ def filter_group_general(group):
     """
     Filters a group of trades to keep only the relevant entries.
     This function checks if there are any closed trades in the group.
-    If there are, it keeps the closed trades and the last open trade.
+    If there are, it keeps the closed trades and all open trades that occur after the last closed trade.
 
     Parameters:
         group (pandas.DataFrame): A group of trades.
+
     Returns:
         pandas.DataFrame: The filtered group.
     """
-    if (group["openCloseIndicator"] == "C").any():
-        max_datetime = group["dateTime"].max()
-        max_dt_row = group[group["dateTime"] == max_datetime]
-        if max_dt_row["openCloseIndicator"].iloc[0] == "O":
-            return pd.concat([group[group["openCloseIndicator"] == "C"], max_dt_row])
-        else:
-            return group[group["openCloseIndicator"] == "C"]
+    closed_trades = group[group["openCloseIndicator"] == "C"]
+    if not closed_trades.empty:
+        last_close_time = closed_trades["dateTime"].max()
+        later_open_trades = group[
+            (group["openCloseIndicator"] == "O") & (group["dateTime"] > last_close_time)
+        ]
+        return pd.concat([closed_trades, later_open_trades])
     else:
         return group
 
@@ -91,7 +92,8 @@ def transform(df):
     df_copy = consolidate_trades(df_copy)
 
     # Ensure consistent datetime format for comparison
-    current_date = pd.Timestamp(datetime.now().date())
+    # current_date = pd.Timestamp(datetime.now().date())
+    current_date = pd.Timestamp("2025-05-19")
     if current_date.weekday() == 5:  # Saturday
         current_date = current_date - timedelta(days=1)
     elif current_date.weekday() == 6:  # Sunday
