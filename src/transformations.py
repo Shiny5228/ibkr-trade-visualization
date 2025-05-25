@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
 
+from src.options import categorize_options_trades
+
 
 def consolidate_trades(df):
     """
@@ -91,9 +93,25 @@ def transform(df):
 
     df_copy = consolidate_trades(df_copy)
 
+    # Initialize the new column with empty values
+    df_copy["opendateTime"] = pd.NaT
+    df_copy["opendateTime"] = df_copy["opendateTime"].astype("datetime64[ns]")
+
+    # Group by 'description'
+    grouped = df_copy.groupby("description")
+    for name, group in grouped:
+        if "O" in group["openCloseIndicator"].values:
+            open_datetime = group[group["openCloseIndicator"] == "O"]["dateTime"].iloc[
+                0
+            ]
+        else:
+            open_datetime = group["dateTime"].iloc[0]
+        df_copy.loc[df_copy["description"] == name, "opendateTime"] = open_datetime
+
+    df_copy_opt = categorize_options_trades(df_copy)
+
     # Ensure consistent datetime format for comparison
-    # current_date = pd.Timestamp(datetime.now().date())
-    current_date = pd.Timestamp("2025-05-19")
+    current_date = pd.Timestamp(datetime.now().date())
     if current_date.weekday() == 5:  # Saturday
         current_date = current_date - timedelta(days=1)
     elif current_date.weekday() == 6:  # Sunday
@@ -108,48 +126,31 @@ def transform(df):
     # Because of weekends and holidays the settlement date is not always t+1 and can be t+2 or t+3.
 
     condition = (
-        (df_copy["tradeDate"] == df_copy["expiry"])
-        & (df_copy["fifoPnlRealized"] == 0)
-        & (df_copy["settleDateTarget"].between(current_date, future_date))
+        (df_copy_opt["tradeDate"] == df_copy_opt["expiry"])
+        & (df_copy_opt["fifoPnlRealized"] == 0)
+        & (df_copy_opt["settleDateTarget"].between(current_date, future_date))
     )
 
     # mtmPnL does not include the commission, so we add it to the mtmPnl to get the correct PnLRealized.
-    mtmPnl_commission = df_copy["mtmPnl"] + df_copy["ibCommission"]
+    mtmPnl_commission = df_copy_opt["mtmPnl"] + df_copy_opt["ibCommission"]
 
     # Set PnLRealized to mtmPnl + ibCommission if the condition is met, otherwise use fifoPnlRealized
-    df_copy["PnLRealized"] = np.where(
-        condition, mtmPnl_commission, df_copy["fifoPnlRealized"]
+    df_copy_opt["PnLRealized"] = np.where(
+        condition, mtmPnl_commission, df_copy_opt["fifoPnlRealized"]
     )
 
-    # Initialize the new column with empty values
-    df_copy["opendateTime"] = pd.NaT
-    df_copy["opendateTime"] = df_copy["opendateTime"].astype("datetime64[ns]")
-
-    # Group by 'description'
-    grouped = df_copy.groupby("description")
-    for name, group in grouped:
-        if "O" in group["openCloseIndicator"].values:
-            open_datetime = group[group["openCloseIndicator"] == "O"]["dateTime"].iloc[
-                0
-            ]
-        else:
-            open_datetime = group["dateTime"].iloc[
-                0
-            ]  # Fallback, falls keine "O" vorhanden
-        df_copy.loc[df_copy["description"] == name, "opendateTime"] = open_datetime
-
     # Filter for closed trades except for the ones that are not settled yet, like 0DTE options
-    df_copy = df_copy[
-        (df_copy["openCloseIndicator"] == "C")
+    df_copy_opt = df_copy_opt[
+        (df_copy_opt["openCloseIndicator"] == "C")
         | (
-            (df_copy["settleDateTarget"].between(current_date, future_date))
-            & (df_copy["PnLRealized"] != 0)
+            (df_copy_opt["settleDateTarget"].between(current_date, future_date))
+            & (df_copy_opt["PnLRealized"] != 0)
         )
     ]
 
     # Remove duplicates based on 'description' and 'tradeDate'.
     # Some 0DTE trades can be counted twice, if the position is closed on the same day and the position is not settled yet.
-    grouped = df_copy.groupby(["description", "tradeDate"])
+    grouped = df_copy_opt.groupby(["description", "tradeDate"])
 
     df_no_dupes = grouped.apply(
         filter_group_general, include_groups=False

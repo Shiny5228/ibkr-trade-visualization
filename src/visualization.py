@@ -106,7 +106,7 @@ def create_dashboard(df):
                                     {"label": i, "value": i}
                                     for i in sorted(df["assetCategory"].unique())
                                 ],
-                                value=df["assetCategory"].unique().tolist(),
+                                value=[],
                                 multi=True,
                                 style={"width": "400px", "color": "#000"},
                             ),
@@ -121,11 +121,27 @@ def create_dashboard(df):
                                     {"label": i, "value": i}
                                     for i in sorted(df["underlyingSymbol"].unique())
                                 ],
-                                value=df["underlyingSymbol"].unique().tolist(),
+                                value=[],
                                 multi=True,
                                 style={"width": "400px", "color": "#000"},
                             ),
                         ]
+                    ),
+                    html.Div(
+                        [
+                            html.Label("Option Strategy Filter:"),
+                            dcc.Dropdown(
+                                id="optionStrategy-filter",
+                                options=[],
+                                value=[],
+                                multi=True,
+                                placeholder="Select option strategy",
+                                style={"width": "400px", "color": "#000"},
+                                disabled=True,
+                            ),
+                        ],
+                        id="optionStrategy-dropdown-wrapper",
+                        style={"display": "none", "marginLeft": "20px"},
                     ),
                 ],
             ),
@@ -186,8 +202,62 @@ def create_dashboard(df):
         elif selected_time_filter == "All quarters":
             options = [{"label": q, "value": q} for q in get_quarters(df)]
             placeholder = "Select one or more quarters"
-            style = {"display": "block", "marginBottom": 20}  # Anzeigen
+            style = {"display": "block", "marginBottom": 20}  # Show
         return style, options, value, placeholder
+
+    # Callback for visibility and options of the option strategy dropdown
+    @app.callback(
+        [
+            Output("optionStrategy-dropdown-wrapper", "style"),
+            Output("optionStrategy-filter", "options"),
+            Output("optionStrategy-filter", "disabled"),
+            Output("optionStrategy-filter", "value"),
+        ],
+        [Input("asset-filter", "value")],
+        prevent_initial_call=True,
+    )
+    def update_option_strategy_dropdown(selected_assets):
+        # Only show if exclusively OPT and/or FOP are selected
+        allowed = {"OPT", "FOP"}
+        selected_set = set(selected_assets)
+        show = selected_set and selected_set.issubset(allowed)
+        # Disable if other asset categories are selected
+        disabled = not show or not selected_set
+        style = (
+            {"display": "block", "marginLeft": "20px"}
+            if show
+            else {"display": "none", "marginLeft": "20px"}
+        )
+        # Set options
+        if show:
+            filtered_df = df[df["assetCategory"].isin(selected_assets)]
+            strategies = sorted(filtered_df["optionStrategy"].dropna().unique())
+            options = [{"label": s, "value": s} for s in strategies]
+        else:
+            options = []
+        return style, options, disabled, []
+
+    # Callback for dynamically updating the symbol options based on asset filter
+    @app.callback(
+        [
+            Output("symbol-filter", "options"),
+            Output("symbol-filter", "value"),
+        ],
+        [Input("asset-filter", "value")],
+        prevent_initial_call=True,
+    )
+    def update_symbol_options_and_reset(selected_assets):
+        if not selected_assets:
+            symbols = sorted(df["underlyingSymbol"].unique())
+        else:
+            symbols = sorted(
+                df[df["assetCategory"].isin(selected_assets)][
+                    "underlyingSymbol"
+                ].unique()
+            )
+        options = [{"label": i, "value": i} for i in symbols]
+
+        return options, []
 
     # Callback for updating the combined chart and indicators
     @app.callback(
@@ -201,10 +271,15 @@ def create_dashboard(df):
             Input("asset-filter", "value"),
             Input("symbol-filter", "value"),
             Input("time-period-dropdown", "value"),
+            Input("optionStrategy-filter", "value"),
         ],
     )
     def update_combined_chart_and_indicators(
-        time_filter, selected_assets, selected_symbols, selected_periods
+        time_filter,
+        selected_assets,
+        selected_symbols,
+        selected_periods,
+        selected_strategies,
     ):
         filtered_df = df.copy()
 
@@ -215,6 +290,12 @@ def create_dashboard(df):
         if selected_symbols:
             filtered_df = filtered_df[
                 filtered_df["underlyingSymbol"].isin(selected_symbols)
+            ]
+        # Filter by Option Strategy, if dropdown is active and selection made
+        allowed = {"OPT", "FOP"}
+        if set(selected_assets).issubset(allowed) and selected_strategies:
+            filtered_df = filtered_df[
+                filtered_df["optionStrategy"].isin(selected_strategies)
             ]
 
         if time_filter == "Total":
