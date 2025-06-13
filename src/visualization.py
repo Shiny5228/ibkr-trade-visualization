@@ -1,7 +1,6 @@
 import pandas as pd
 import plotly.graph_objs as go
 from dash import Dash, Input, Output, dcc, html
-from plotly.subplots import make_subplots
 
 
 # Helper functions for time filters
@@ -161,6 +160,7 @@ def create_dashboard(df):
                 ],
             ),
             dcc.Graph(id="combined-chart"),
+            # Indicators: first row
             html.Div(
                 style={
                     "display": "flex",
@@ -168,83 +168,70 @@ def create_dashboard(df):
                     "gap": "2vw",
                     "marginTop": "20px",
                     "justifyContent": "flex-start",
-                    "alignItems": "flex-start",
+                    "alignItems": "stretch",
                     "width": "100%",
-                    "position": "relative",
                     "flexWrap": "wrap",
                 },
                 children=[
-                    html.Div(
-                        style={
-                            "width": "30vw",
-                            "minWidth": "320px",
-                            "height": "40vw",
-                            "maxHeight": "500px",
-                            "flexShrink": 0,
-                            "alignSelf": "flex-start",
-                            "zIndex": 2,
-                            "background": "transparent",
-                        },
-                        children=[
-                            dcc.Graph(
-                                id="summary-indicators",
-                                style={
-                                    "width": "100%",
-                                    "height": "100%",
-                                    "minWidth": "320px",
-                                    "minHeight": "320px",
-                                    "maxHeight": "500px",
-                                    "margin": "0",
-                                },
-                                config={"responsive": True},
-                            ),
-                        ],
+                    dcc.Graph(
+                        id="premium-sold-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
                     ),
-                    html.Div(
-                        style={
-                            "display": "grid",
-                            "gridTemplateColumns": "repeat(3, minmax(140px, 1fr))",
-                            "gridTemplateRows": "repeat(2, minmax(140px, 1fr))",
-                            "gap": "2vw",
-                            "minWidth": "420px",
-                            "width": "45vw",
-                            "maxWidth": "700px",
-                            "height": "40vw",
-                            "maxHeight": "500px",
-                            "alignItems": "start",
-                            "justifyItems": "start",
-                            "zIndex": 1,
-                            "background": "transparent",
-                            "marginLeft": "2vw",
-                        },
-                        children=[
-                            dcc.Graph(
-                                id="avg-winner-indicator",
-                                style={"width": "100%", "height": "100%"},
-                                config={"responsive": True},
-                            ),
-                            dcc.Graph(
-                                id="avg-loser-indicator",
-                                style={"width": "100%", "height": "100%"},
-                                config={"responsive": True},
-                            ),
-                            dcc.Graph(
-                                id="avg-per-trade-indicator",
-                                style={"width": "100%", "height": "100%"},
-                                config={"responsive": True},
-                            ),
-                            dcc.Graph(
-                                id="max-winner-indicator",
-                                style={"width": "100%", "height": "100%"},
-                                config={"responsive": True},
-                            ),
-                            dcc.Graph(
-                                id="max-loser-indicator",
-                                style={"width": "100%", "height": "100%"},
-                                config={"responsive": True},
-                            ),
-                            html.Div(),
-                        ],
+                    dcc.Graph(
+                        id="premium-captured-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
+                    ),
+                    dcc.Graph(
+                        id="pcr-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
+                    ),
+                    dcc.Graph(
+                        id="win-rate-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
+                    ),
+                ],
+            ),
+            # Indicators: second row
+            html.Div(
+                style={
+                    "display": "flex",
+                    "flexDirection": "row",
+                    "gap": "2vw",
+                    "marginTop": "20px",
+                    "justifyContent": "flex-start",
+                    "alignItems": "stretch",
+                    "width": "100%",
+                    "flexWrap": "wrap",
+                },
+                children=[
+                    dcc.Graph(
+                        id="avg-per-trade-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
+                    ),
+                    dcc.Graph(
+                        id="avg-winner-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
+                    ),
+                    dcc.Graph(
+                        id="avg-loser-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
+                    ),
+                    dcc.Graph(
+                        id="max-winner-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
+                    ),
+                    dcc.Graph(
+                        id="max-loser-indicator",
+                        style={"flex": "1 1 0", "minWidth": "180px", "height": "180px"},
+                        config={"responsive": True},
                     ),
                 ],
             ),
@@ -339,7 +326,10 @@ def create_dashboard(df):
     @app.callback(
         [
             Output("combined-chart", "figure"),
-            Output("summary-indicators", "figure"),
+            Output("premium-sold-indicator", "figure"),
+            Output("premium-captured-indicator", "figure"),
+            Output("pcr-indicator", "figure"),
+            Output("win-rate-indicator", "figure"),
             Output("avg-winner-indicator", "figure"),
             Output("avg-loser-indicator", "figure"),
             Output("avg-per-trade-indicator", "figure"),
@@ -421,7 +411,7 @@ def create_dashboard(df):
             go.Indicator(
                 mode="number",
                 value=win_rate,
-                number={"font": {"size": 20}},
+                number={"font": {"size": 40}},
                 title={"text": "Win Rate (%)", "font": {"size": 20}},
             )
         )
@@ -439,12 +429,14 @@ def create_dashboard(df):
             pcr = (sum_realized / sum_cost * 100).round(2) if sum_cost != 0 else 0
         else:
             pcr = 0
+            sum_cost = 0
+            sum_realized = 0
 
         pcr_figure = go.Figure(
             go.Indicator(
                 mode="number",
                 value=pcr,
-                number={"font": {"size": 20}},
+                number={"font": {"size": 40}},
                 title={"text": "PCR (%)", "font": {"size": 20}},
             )
         )
@@ -456,7 +448,7 @@ def create_dashboard(df):
             go.Indicator(
                 mode="number",
                 value=sum_cost,
-                number={"prefix": "$", "font": {"size": 20}},
+                number={"prefix": "$", "font": {"size": 40}},
                 title={"text": "Premium Sold", "font": {"size": 20}},
             )
         )
@@ -468,41 +460,13 @@ def create_dashboard(df):
             go.Indicator(
                 mode="number",
                 value=sum_realized,
-                number={"prefix": "$", "font": {"size": 20}},
+                number={"prefix": "$", "font": {"size": 40}},
                 title={"text": "Premium Captured", "font": {"size": 20}},
             )
         )
         premium_c_figure.update_layout(
             plot_bgcolor="#3f3f3f", paper_bgcolor="#3f3f3f", font=dict(color="white")
         )
-
-        # Compose summary indicators as 2x2 subplot
-        summary_fig = make_subplots(
-            rows=2,
-            cols=2,
-            vertical_spacing=0.15,
-            horizontal_spacing=0.15,
-            specs=[
-                [{"type": "indicator"}, {"type": "indicator"}],
-                [{"type": "indicator"}, {"type": "indicator"}],
-            ],
-        )
-        # Add indicators to subplots
-        summary_fig.add_trace(win_rate_figure.data[0], row=1, col=1)
-        summary_fig.add_trace(pcr_figure.data[0], row=1, col=2)
-        summary_fig.add_trace(premium_sold_figure.data[0], row=2, col=1)
-        summary_fig.add_trace(premium_c_figure.data[0], row=2, col=2)
-        summary_fig.update_layout(
-            plot_bgcolor="#3f3f3f",
-            paper_bgcolor="#3f3f3f",
-            font=dict(color="white"),
-            showlegend=False,
-            margin=dict(l=20, r=20, t=60, b=20),
-            height=None,  # dynamisch
-            width=None,  # dynamisch
-        )
-        for i in summary_fig["layout"]["annotations"]:
-            i["font"] = dict(size=10, color="white")
 
         # Average and max calculations
         if not filtered_df.empty:
@@ -526,7 +490,7 @@ def create_dashboard(df):
             go.Indicator(
                 mode="number",
                 value=avg_winner,
-                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 20}},
+                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 40}},
                 title={"text": "Avg Winner / Trade", "font": {"size": 20}},
             )
         )
@@ -538,7 +502,7 @@ def create_dashboard(df):
             go.Indicator(
                 mode="number",
                 value=avg_loser,
-                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 20}},
+                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 40}},
                 title={"text": "Avg Loser / Trade", "font": {"size": 20}},
             )
         )
@@ -546,11 +510,26 @@ def create_dashboard(df):
             plot_bgcolor="#3f3f3f", paper_bgcolor="#DD2C48", font=dict(color="white")
         )
 
+        avg_per_trade_figure = go.Figure(
+            go.Indicator(
+                mode="number",
+                value=avg_per_trade,
+                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 40}},
+                title={"text": "Avg Per Trade", "font": {"size": 20}},
+            )
+        )
+        avg_per_trade_bgcolor = "#00A796" if avg_per_trade >= 0 else "#DD2C48"
+        avg_per_trade_figure.update_layout(
+            plot_bgcolor="#3f3f3f",
+            paper_bgcolor=avg_per_trade_bgcolor,
+            font=dict(color="white"),
+        )
+
         max_winner_figure = go.Figure(
             go.Indicator(
                 mode="number",
                 value=max_winner,
-                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 20}},
+                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 40}},
                 title={"text": "Max Winner / Trade", "font": {"size": 20}},
             )
         )
@@ -562,27 +541,12 @@ def create_dashboard(df):
             go.Indicator(
                 mode="number",
                 value=max_loser,
-                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 20}},
+                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 40}},
                 title={"text": "Max Loser / Trade", "font": {"size": 20}},
             )
         )
         max_loser_figure.update_layout(
             plot_bgcolor="#3f3f3f", paper_bgcolor="#DD2C48", font=dict(color="white")
-        )
-
-        avg_per_trade_figure = go.Figure(
-            go.Indicator(
-                mode="number",
-                value=avg_per_trade,
-                number={"valueformat": ".2f", "prefix": "$", "font": {"size": 20}},
-                title={"text": "Avg Per Trade", "font": {"size": 20}},
-            )
-        )
-        avg_per_trade_bgcolor = "#00A796" if avg_per_trade >= 0 else "#DD2C48"
-        avg_per_trade_figure.update_layout(
-            plot_bgcolor="#3f3f3f",
-            paper_bgcolor=avg_per_trade_bgcolor,
-            font=dict(color="white"),
         )
 
         # Chart calculation
@@ -669,10 +633,13 @@ def create_dashboard(df):
 
         return (
             combined_chart,
-            summary_fig,
+            premium_sold_figure,
+            premium_c_figure,
+            pcr_figure,
+            win_rate_figure,
+            avg_per_trade_figure,
             avg_winner_figure,
             avg_loser_figure,
-            avg_per_trade_figure,
             max_winner_figure,
             max_loser_figure,
         )
