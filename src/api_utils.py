@@ -1,3 +1,4 @@
+import time
 import xml.etree.ElementTree as ET
 from io import StringIO
 
@@ -46,9 +47,43 @@ def get_statement(config, reference_code):
 
     get_url = "https://ndcdyn.interactivebrokers.com/AccountManagement/FlexWebService/GetStatement"
     get_params = {"t": token, "q": reference_code, "v": flex_version}
-    xml_data = requests.get(get_url, params=get_params, headers=headers).text
 
-    return pd.read_xml(StringIO(xml_data), xpath=".//Trade")
+    max_retries = 5
+    retry_delay = 5  # seconds
+
+    for attempt in range(max_retries):
+        xml_data = requests.get(get_url, params=get_params, headers=headers).text
+
+        # Check if response contains an error
+        try:
+            root = ET.fromstring(xml_data)
+            error_code = root.findtext("ErrorCode")
+
+            if error_code == "1019":
+                # Error 1019: Statement generation in progress
+                if attempt < max_retries - 1:
+                    print(
+                        f"Statement generation in progress. Retrying in {retry_delay} seconds... (attempt {attempt + 1}/{max_retries})"
+                    )
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    error_msg = root.findtext(
+                        "ErrorMessage",
+                        "Statement generation in progress. Maximum retries exceeded.",
+                    )
+                    raise Exception(f"FlexQuery Error 1019: {error_msg}")
+            elif error_code:
+                # Other error codes - fail immediately
+                error_msg = root.findtext("ErrorMessage", "Unknown error")
+                raise Exception(f"FlexQuery Error {error_code}: {error_msg}")
+            else:
+                # No error code found, assume success
+                return pd.read_xml(StringIO(xml_data), xpath=".//Trade")
+        except ET.ParseError:
+            # If XML parsing fails, it might be a valid response with different structure
+            # Return as-is and let the caller handle it
+            return pd.read_xml(StringIO(xml_data), xpath=".//Trade")
 
 
 def process_statement_data(df):
