@@ -1,30 +1,33 @@
 import time
 
+import streamlit as st
+
 from src.api_utils import get_statement, process_statement_data, send_request
 from src.config import load_config
+from src.streamlit_dashboard import run_streamlit_dashboard
 from src.transformations import transform
-from src.visualization import create_dashboard
+
+
+@st.cache_data
+def load_and_process_data():
+    config = load_config()
+    reference_code = send_request(config)
+    time.sleep(5)
+    df = get_statement(config, reference_code)
+    df = process_statement_data(df)
+    df = transform(df)
+    return df
 
 
 def run_application():
-    # Load Environment Variables
-    config = load_config()
+    # Refresh button in the sidebar
+    if st.button("🔄 Refresh data"):
+        st.cache_data.clear()
+        st.rerun()
 
-    # Get Statement from IB via API
-    reference_code = send_request(config)
-
-    # Wait for the statement to be generated. Quick fix until more robust solution is implemented.
-    time.sleep(5)
-
-    df = get_statement(config, reference_code)
-
-    # Process Data
-    df = process_statement_data(df)
-    df = transform(df)
-
-    # Create Dashboard
-    app = create_dashboard(df)
-    app.run(debug=True)
+    # Load data
+    df = load_and_process_data()
+    run_streamlit_dashboard(df)
 
 
 if __name__ == "__main__":
