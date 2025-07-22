@@ -90,6 +90,8 @@ def transform(df):
         pandas.DataFrame: A grouped DataFrame with calculated PnLRealized.
     """
     df_copy = df.copy()
+    if "tradeID" in df_copy.columns:
+        df_copy = df_copy.drop(columns=["tradeID"], errors="ignore")
 
     df_copy = consolidate_trades(df_copy)
 
