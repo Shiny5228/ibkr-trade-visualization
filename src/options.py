@@ -111,6 +111,25 @@ def identify_option_strategy(group):
                         return "Diagonal Put Spread"
 
     elif len(group) == 4:
+        # Double Calendar:
+        expiries = sorted(group["expiry"].unique())
+        if len(expiries) == 2:
+            short_expiry, long_expiry = expiries[0], expiries[1]
+            short_rows = group[group["expiry"] == short_expiry]
+            long_rows = group[group["expiry"] == long_expiry]
+            if (short_rows["buySell"] == "SELL").all() and (
+                long_rows["buySell"] == "BUY"
+            ).all():
+                strike_counts = group["strike"].value_counts()
+                if len(strike_counts) == 2 and (strike_counts == 2).all():
+                    strike_groups = [
+                        group[group["strike"] == s]
+                        for s in strike_counts.index.tolist()
+                    ]
+                    if all(sg["putCall"].nunique() == 1 for sg in strike_groups):
+                        if set(group["putCall"]) == {"P", "C"}:
+                            return "Double Calendar"
+
         if group["expiry"].nunique() == 1:
             # Iron Condor
             if set(group["putCall"]) == {"P", "C"}:
